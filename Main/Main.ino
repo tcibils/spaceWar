@@ -92,12 +92,13 @@ struct Player {
   byte columnCoordinate;
   byte level;
   byte colour;
+  byte playerDirection;
 };
 
 // And the players are listed here
 Player playersArray[numberOfPlayers] = {
-  {3, 3, 1, Purple},
-  {13, 13, 2, Red}
+  {3, 3, 1, Purple, directionRight},
+  {13, 13, 2, Red, directionLeft}
 };
 
 
@@ -168,8 +169,8 @@ void loop() {
     lastMillis = millis();
   }
   clearLEDMatrix();
-  displayPlayer(playersArray[0]);
-  displayPlayer(playersArray[1]);
+  displayPlayer(0);
+  displayPlayer(1);
 
 
 
@@ -201,14 +202,29 @@ void loop() {
 }
 
 // Displaying a player's ship on the matrix, depending on its level and position
-void displayPlayer(Player playerToDisplay) {
-
+void displayPlayer(const byte playerToDisplayID) {
+  
   // Depending on the player's level, we iterate on the respective ship size
-  for (byte i = 0; i < shipSizes[playerToDisplay.level]; i++) {
-    for (byte j = 0; j < shipSizes[playerToDisplay.level]; j++) {
+  for (byte i = 0; i < shipSizes[playersArray[playerToDisplayID].level]; i++) {
+    for (byte j = 0; j < shipSizes[playersArray[playerToDisplayID].level]; j++) {
+      if(playersArray[playerToDisplayID].playerDirection == directionRight) {
+        // Then, we recopy in our LED Matrix the player's ship, depending on the player position and level.
+        LEDMatrix[playersArray[playerToDisplayID].lineCoordinate + i][playersArray[playerToDisplayID].columnCoordinate + j] = playersArray[playerToDisplayID].colour * pgm_read_byte(&(ships[playersArray[playerToDisplayID].level][i][j]));
+      }
 
-      // Then, we recopy in our LED Matrix the player's ship, depending on the player position and level.
-      LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = playerToDisplay.colour * pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
+      if(playersArray[playerToDisplayID].playerDirection == directionLeft) {
+//        LEDMatrix[playersArray[playerToDisplayID].lineCoordinate + i][playersArray[playerToDisplayID].columnCoordinate + j] = playersArray[playerToDisplayID].colour * pgm_read_byte(&(ships[playersArray[playerToDisplayID].level][i][j]));
+        LEDMatrix[playersArray[playerToDisplayID].lineCoordinate + i][playersArray[playerToDisplayID].columnCoordinate + j] = playersArray[playerToDisplayID].colour * pgm_read_byte(&(ships[playersArray[playerToDisplayID].level][i][shipSizes[playersArray[playerToDisplayID].level] - j -1]));
+      }
+      /*
+      if(playersArray[playerToDisplayID].playerDirection == directionUp) {
+        LEDMatrix[playersArray[playerToDisplayID].lineCoordinate + i][playersArray[playerToDisplayID].columnCoordinate + j] = playersArray[playerToDisplayID].colour * pgm_read_byte(&(
+      }
+      
+      if(playersArray[playerToDisplayID].playerDirection == directionDown) {
+        LEDMatrix[playersArray[playerToDisplayID].lineCoordinate + i][playersArray[playerToDisplayID].columnCoordinate + j] = playersArray[playerToDisplayID].colour * pgm_read_byte(&(
+      }*/
+      
     }
   }
 }
@@ -220,6 +236,7 @@ void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
   bool blockedByAnotherPlayer = false;
   bool blockedByMapBorder = false;
 
+  // Case 1 : going up
   if (directionToMove == directionUp) {
     // We need to check if another player is in the way. We check for all players
     for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
@@ -250,59 +267,27 @@ void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
     }
   }
 
+
+  // Case 2 : going right
   if (directionToMove == directionRight) {
 
-    // We need to check if another player is in the way. We check for all players
-    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
-      // We do not check for the player we're moving, of course
-      if (playersIterationIndex != playerToMoveIndex) {
-        
-      }
-    }
-    
     if (playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
-      blockedByMapBorder = true;
-    }
-    
-    // If we're not blocked
-    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
+     
       playersArray[playerToMoveIndex].columnCoordinate++;
     }
   }
 
   if (directionToMove == directionDown) {
-    // We need to check if another player is in the way. We check for all players
-    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
-      // We do not check for the player we're moving, of course
-      if (playersIterationIndex != playerToMoveIndex) {
-        
-      }
-    }
-    if (playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
-      blockedByMapBorder = true;
-    }
     
-    // If we're not blocked
-    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
+    if (playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
+    
       playersArray[playerToMoveIndex].lineCoordinate++;
     }
   }
 
   if (directionToMove == directionLeft) {
-    // We need to check if another player is in the way. We check for all players
-    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
-      // We do not check for the player we're moving, of course
-      if (playersIterationIndex != playerToMoveIndex) {
-        
-      }
-    }
-    
+
     if (playersArray[playerToMoveIndex].columnCoordinate > 0) {
-      blockedByMapBorder = true;
-    }
-    
-    // If we're not blocked
-    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].columnCoordinate--;
     }
   }
