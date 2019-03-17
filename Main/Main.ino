@@ -91,12 +91,13 @@ struct Player {
   byte lineCoordinate;
   byte columnCoordinate;
   byte level;
+  byte colour;
 };
 
 // And the players are listed here
 Player playersArray[numberOfPlayers] = {
-  {1,1,1},
-  {13,13,2}
+  {1,1,1,Purple},
+  {13,13,2,Red}
 };
 
 
@@ -207,7 +208,7 @@ void displayPlayer(Player playerToDisplay) {
     for(byte j = 0; j < shipSizes[playerToDisplay.level]; j++) {
       
       // Then, we recopy in our LED Matrix the player's ship, depending on the player position and level.
-      LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
+      LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = playerToDisplay.colour * pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
     }
   }
 }
