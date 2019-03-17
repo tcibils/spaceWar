@@ -96,7 +96,7 @@ struct Player {
 
 // And the players are listed here
 Player playersArray[numberOfPlayers] = {
-  {3, 3, 1, Purple, directionUp},
+  {5, 6, 1, Purple, directionUp},
   {13, 13, 2, Red, directionUp}
 };
 
@@ -316,6 +316,24 @@ bool checkIfPlayerAbove(const byte playerToMoveIndex) {
 
 bool checkIfPlayerBelow(const byte playerToMoveIndex) {
   bool result = false;
+  
+  // We need to check if another player is in the way. We check for all players
+  for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+    // We do not check for the player we're moving, of course
+    if (playersIterationIndex != playerToMoveIndex) {
+      // If the player's "just below" is the top of another player
+      if (playersArray[playerToMoveIndex].lineCoordinate + shipSizes[playersArray[playerToMoveIndex].level] == playersArray[playersIterationIndex].lineCoordinate) {
+        // And if our most left point is at the left of the other player's most right point
+        if(playersArray[playerToMoveIndex].columnCoordinate < playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+          // And if our most right point is at the right of the other player's most left point
+          if(playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].columnCoordinate) {
+            // THEN YES WE'RE FUCKING BLOCKED
+            result = true;
+          }
+        }        
+      }
+    }
+  }
 
   return result;
 }
@@ -324,12 +342,48 @@ bool checkIfPlayerBelow(const byte playerToMoveIndex) {
 bool checkIfPlayerLeftTo(const byte playerToMoveIndex) {
   bool result = false;
   
+  // We need to check if another player is in the way. We check for all players
+  for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+    // We do not check for the player we're moving, of course
+    if (playersIterationIndex != playerToMoveIndex) {
+      // If the player's "just left" is the right of another player
+      if (playersArray[playerToMoveIndex].columnCoordinate == playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+        // And if our most up point is upper of the other player's most low point
+        if(playersArray[playerToMoveIndex].lineCoordinate < playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+          // And if our most down point is downer of the other player's most upper point
+          if(playersArray[playerToMoveIndex].lineCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].lineCoordinate) {
+            // THEN YES WE'RE FUCKING BLOCKED
+            result = true;
+          }
+        }
+      }
+    }
+  }
+  
   return result;
 }
 
 
 bool checkIfPlayerRightTo(const byte playerToMoveIndex) {
   bool result = false;
+  
+  // We need to check if another player is in the way. We check for all players
+  for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+    // We do not check for the player we're moving, of course
+    if (playersIterationIndex != playerToMoveIndex) {
+      // If the player's "just right" is the right of another player
+      if (playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] == playersArray[playersIterationIndex].columnCoordinate) {
+        // And if our most up point is upper of the other player's most low point
+        if(playersArray[playerToMoveIndex].lineCoordinate < playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+          // And if our most down point is downer of the other player's most upper point
+          if(playersArray[playerToMoveIndex].lineCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].lineCoordinate) {
+            // THEN YES WE'RE FUCKING BLOCKED
+            result = true;
+          }
+        }
+      }      
+    }
+  }
   
   return result;
 }
