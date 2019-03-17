@@ -72,6 +72,29 @@ struct pointOnMatrix {
 unsigned long lastMillis = 0;
 unsigned const int growthSpeed = 1500;  // In miliseconds, every how much will the menace grow
 
+#define sizeShipOne 4
+#define sizeShipTwo 4
+#define sizeShipThree 3
+
+
+const byte PROGMEM shipOne[sizeShipOne][sizeShipOne] = {
+  {0, 1, 1, 1},
+  {1, 1, 1, 0},
+  {1, 1, 1, 0},
+  {0, 1, 1, 1}
+};
+
+const byte PROGMEM shipTwo[sizeShipTwo][sizeShipTwo] = {
+  {1, 1, 1},
+  {1, 1, 0},
+  {1, 1, 1}
+};
+
+const byte PROGMEM shipThree[sizeShipThree][sizeShipThree] = {
+  {0, 1, 1},
+  {0, 1, 0},
+  {0, 1, 1} 
+};
 
 
 
