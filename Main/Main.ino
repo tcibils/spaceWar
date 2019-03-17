@@ -64,6 +64,12 @@ const byte Red = 3;
 const byte Green = 4;
 const byte Purple = 5;
 
+#define directionUp 0
+#define directionRight 1
+#define directionDown 2
+#define directionLeft 3
+
+
 struct pointOnMatrix {
   byte lineCoordinate;
   byte columnCoordinate;
@@ -173,6 +179,33 @@ void displayPlayer(Player playerToDisplay) {
       
       // Then, we recopy in our LED Matrix the player's ship, depending on the player position and level.
       LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
+    }
+  }
+}
+
+
+void movePlayer(Player playerToMove, byte directionToMove) {
+  if(directionToMove == directionUp) {
+    if(playerToMove.lineCoordinate > 0) {
+      playerToMove.lineCoordinate--;
+    }
+  }
+
+  if(directionToMove == directionRight) {
+    if(playerToMove.columnCoordinate < displayNumberOfColumns - shipSizes[playerToMove.level]) {
+      playerToMove.columnCoordinate++;
+    }
+  }
+  
+  if(directionToMove == directionDown) {
+    if(playerToMove.lineCoordinate < displayNumberOfRows - shipSizes[playerToMove.level]) {
+      playerToMove.lineCoordinate++;
+    }
+  }
+  
+  if(directionToMove == directionLeft) {
+    if(playerToMove.columnCoordinate > 0) {
+      playerToMove.columnCoordinate--;
     }
   }
 }
