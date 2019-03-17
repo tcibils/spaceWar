@@ -10,8 +10,8 @@
 #include <avr/pgmspace.h>
 
 // LED MATRIX CODE
-#define displayNumberOfRows 10                          // Number of rows
-#define displayNumberOfColumns 6                       // Number of coumns
+#define displayNumberOfRows 16                          // Number of rows
+#define displayNumberOfColumns 16                       // Number of coumns
 #define NUM_LEDS displayNumberOfRows * displayNumberOfColumns // Number of LEDs
 
 CRGB leds[NUM_LEDS];                                          // Defining leds table for FastLed
@@ -78,10 +78,12 @@ unsigned const int growthSpeed = 1500;  // In miliseconds, every how much will t
 void setup() {
 
   Serial.begin(9600);
-
+  
   // Set matrix pins to output
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
+  clearLEDMatrix();
+  
   /* Initialisation des broches */
   pinMode(PIN_LATCH, OUTPUT);
   pinMode(PIN_CLOCK, OUTPUT);
@@ -231,7 +233,7 @@ void outputDisplay() {
       // Useful because of the way my matrix is soldered.
       // So we'll invert one column every two compared to our digital matrix
       // If we're on an even column, we're fine, everything is straightfoward
-      if(columnIndex%2 == 0) {
+      if(columnIndex%2 == 1) {
         
         if(LEDMatrix[rowIndex][columnIndex] == Black) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Black;}
         if(LEDMatrix[rowIndex][columnIndex] == White) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::White;}
@@ -241,7 +243,7 @@ void outputDisplay() {
         if(LEDMatrix[rowIndex][columnIndex] == Purple) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Purple;}
       }
       // If we're on an uneven column, we do a mathematical trick to invert it
-      else if(columnIndex%2 == 1) {
+      else if(columnIndex%2 == 0) {
         if(LEDMatrix[rowIndex][columnIndex] == Black) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Black;}
         if(LEDMatrix[rowIndex][columnIndex] == White) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::White;}
         if(LEDMatrix[rowIndex][columnIndex] == Green) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Green;}
