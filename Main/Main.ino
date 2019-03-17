@@ -77,11 +77,6 @@ const byte Purple = 5;
 #define directionDown 2
 #define directionLeft 3
 
-#define moveForward 4
-#define moveBackward 5
-#define moveLeft 6
-#define moveRight 7
-
 struct pointOnMatrix {
   byte lineCoordinate;
   byte columnCoordinate;
@@ -183,19 +178,19 @@ void loop() {
 
     // In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
     if (playerButtonPushed[playerIndex][4] == 1) {
-      movePlayer(playerIndex, moveRight);
+      movePlayer(playerIndex, directionRight);
     }
 
     if (playerButtonPushed[playerIndex][5] == 1) {
-      movePlayer(playerIndex, moveLeft);
+      movePlayer(playerIndex, directionLeft);
     }
 
     if (playerButtonPushed[playerIndex][6] == 1) {
-      movePlayer(playerIndex, moveBackward);
+      movePlayer(playerIndex, directionDown);
     }
 
     if (playerButtonPushed[playerIndex][7] == 1) {
-      movePlayer(playerIndex, moveForward);
+      movePlayer(playerIndex, directionUp);
     }
 
     resetButtons(playerIndex);
@@ -235,62 +230,46 @@ void displayPlayer(const byte playerToDisplayID) {
 
 
 // Moves the passed played in the passed direction, and make checks before doing it (existance of another spaceship or of world map so far)
-void movePlayer(const byte playerToMoveIndex, const byte moveOrder) {
+void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
 
   bool blockedByAnotherPlayer = false;
   bool blockedByMapBorder = false;
 
   // Case 1 : player is facing up
-  if (playersArray[playerToMoveIndex].playerDirection == directionUp) {
-    // The player is facing up, and wants to move forward
-    if(moveOrder == moveForward) {
-      // We need to check if another player is in the way. We check for all players
-      for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
-        // We do not check for the player we're moving, of course
-        if (playersIterationIndex != playerToMoveIndex) {
-          // If the player's "just above" is the bottom of another player
-          if (playersArray[playerToMoveIndex].lineCoordinate == playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
-            // And if our most left point is at the left of the other player's most right point
-            if(playersArray[playerToMoveIndex].columnCoordinate < playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
-              // And if our most right point is at the right of the other player's most left point
-              if(playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].columnCoordinate) {
-                // THEN YES WE'RE FUCKING BLOCKED
-                blockedByAnotherPlayer = true;
-              }
+  if (directionToMove == directionUp) {
+    // We need to check if another player is in the way. We check for all players
+    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+      // We do not check for the player we're moving, of course
+      if (playersIterationIndex != playerToMoveIndex) {
+        // If the player's "just above" is the bottom of another player
+        if (playersArray[playerToMoveIndex].lineCoordinate == playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+          // And if our most left point is at the left of the other player's most right point
+          if(playersArray[playerToMoveIndex].columnCoordinate < playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+            // And if our most right point is at the right of the other player's most left point
+            if(playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].columnCoordinate) {
+              // THEN YES WE'RE FUCKING BLOCKED
+              blockedByAnotherPlayer = true;
             }
           }
         }
       }
-    
-      // We also check if we're near the map
-      if(playersArray[playerToMoveIndex].lineCoordinate == 0) {
-        blockedByMapBorder = true;
-      }
+    }
   
-      // If we're not blocked
-      if (!blockedByMapBorder && !blockedByAnotherPlayer) {
-        // We move the player by one up
-        playersArray[playerToMoveIndex].lineCoordinate--;
-      }
+    // We also check if we're near the map
+    if(playersArray[playerToMoveIndex].lineCoordinate == 0) {
+      blockedByMapBorder = true;
     }
 
-    if(moveOrder == moveBackwards) {
-      
-    }
-
-    // If the player wants to change direction, that's easy
-    if(moveOrder == moveLeft) {
-      playersArray[playerToMoveIndex].playerDirection = directionLeft;
-    }
-    
-    if(moveOrder == moveRight) {
-      playersArray[playerToMoveIndex].playerDirection = directionRight;
+    // If we're not blocked
+    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
+      // We move the player by one up
+      playersArray[playerToMoveIndex].lineCoordinate--;
     }
   }
 
 
   // Case 2 : going right
-  if (playersArray[playerToMoveIndex].playerDirection == directionRight) {
+  if (directionToMove == directionRight) {
 
     if (playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
      
@@ -298,7 +277,7 @@ void movePlayer(const byte playerToMoveIndex, const byte moveOrder) {
     }
   }
 
-  if (playersArray[playerToMoveIndex].playerDirection == directionDown) {
+  if (directionToMove == directionDown) {
     
     if (playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
     
@@ -306,7 +285,7 @@ void movePlayer(const byte playerToMoveIndex, const byte moveOrder) {
     }
   }
 
-  if (playersArray[playerToMoveIndex].playerDirection == directionLeft) {
+  if (directionToMove == directionLeft) {
 
     if (playersArray[playerToMoveIndex].columnCoordinate > 0) {
       playersArray[playerToMoveIndex].columnCoordinate--;
