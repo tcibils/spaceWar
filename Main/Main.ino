@@ -184,6 +184,7 @@ void displayPlayer(Player playerToDisplay) {
 }
 
 
+// Moves the passed played in the passed direction, and make checks before doing it
 void movePlayer(Player playerToMove, byte directionToMove) {
   if(directionToMove == directionUp) {
     if(playerToMove.lineCoordinate > 0) {
