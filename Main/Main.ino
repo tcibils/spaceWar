@@ -69,33 +69,61 @@ struct pointOnMatrix {
   byte columnCoordinate;
 };
 
+#define numberOfPlayers 2
+
+struct Player {
+  byte lineCoordinate;
+  byte columnCoordinate;
+  byte level;
+};
+
+Player playersArray[numberOfPlayers] = {
+  {1,1,1},
+  {13,13,2}
+};
+
+
 unsigned long lastMillis = 0;
 unsigned const int growthSpeed = 1500;  // In miliseconds, every how much will the menace grow
 
-#define sizeShipOne 4
-#define sizeShipTwo 4
-#define sizeShipThree 3
+// Defines the number of different ships existing
+#define numberOfShips 4
+#define maxShipSize 5
 
+// Each ship fits in a square, from top left, defined below for fitting on map. The biggest ship must be the first.
+const byte shipSizes[numberOfShips] = {maxShipSize, 4, 3, 3};
 
-const byte PROGMEM shipOne[sizeShipOne][sizeShipOne] = {
-  {0, 1, 1, 1},
-  {1, 1, 1, 0},
-  {1, 1, 1, 0},
-  {0, 1, 1, 1}
+// Ships are defined below.0 means "off", and 1 means "on"
+const byte PROGMEM ships[numberOfShips][maxShipSize][maxShipSize] = {
+  {
+    {0, 1, 1, 1, 0},
+    {1, 1, 1, 0, 0},
+    {1, 1, 1, 1, 1},
+    {1, 1, 1, 0, 0},
+    {0, 1, 1, 1, 0}
+  },
+  {
+    {0, 1, 1, 1, 0},
+    {1, 1, 1, 0, 0},
+    {1, 1, 1, 0, 0},
+    {0, 1, 1, 1, 0},
+    {0, 0, 0, 0, 0}
+  },
+  {
+    {1, 1, 1, 0, 0},
+    {1, 1, 0, 0, 0},
+    {1, 1, 1, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0}
+  },
+  {
+    {0, 1, 1, 0, 0},
+    {0, 1, 0, 0, 0},
+    {0, 1, 1, 0, 0}, 
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0}
+  }
 };
-
-const byte PROGMEM shipTwo[sizeShipTwo][sizeShipTwo] = {
-  {1, 1, 1},
-  {1, 1, 0},
-  {1, 1, 1}
-};
-
-const byte PROGMEM shipThree[sizeShipThree][sizeShipThree] = {
-  {0, 1, 1},
-  {0, 1, 0},
-  {0, 1, 1} 
-};
-
 
 
 void setup() {
@@ -121,6 +149,8 @@ if(lastMillis - millis() > 500) {
   lastMillis = millis();
 }
 
+   displayPlayer(playersArray[0]);
+   displayPlayer(playersArray[1]);
    
    checkButtons();      // Checks which buttons have been pushed and set according variable to 1
 
@@ -130,6 +160,15 @@ if(lastMillis - millis() > 500) {
 
   outputDisplay();
   delay(1);
+}
+
+void displayPlayer(Player playerToDisplay) {
+  for(byte i = 0; i < shipSizes[playerToDisplay.level]; i++) {
+    for(byte j = 0; j < shipSizes[playerToDisplay.level]; j++) {
+      // We recopy in our LED Matrix the player's ship, depending on the player level.
+      LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
+    }
+  }
 }
 
 void checkButtons() {
