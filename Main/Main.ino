@@ -69,14 +69,17 @@ struct pointOnMatrix {
   byte columnCoordinate;
 };
 
+// Defining players
 #define numberOfPlayers 2
 
+// So far, it's a position and a level
 struct Player {
   byte lineCoordinate;
   byte columnCoordinate;
   byte level;
 };
 
+// And the players are listed here
 Player playersArray[numberOfPlayers] = {
   {1,1,1},
   {13,13,2}
@@ -84,16 +87,15 @@ Player playersArray[numberOfPlayers] = {
 
 
 unsigned long lastMillis = 0;
-unsigned const int growthSpeed = 1500;  // In miliseconds, every how much will the menace grow
+unsigned const int growthSpeed = 1500;  // In miliseconds, how long will a "tick" be
 
-// Defines the number of different ships existing
-#define numberOfShips 4
-#define maxShipSize 5
 
-// Each ship fits in a square, from top left, defined below for fitting on map. The biggest ship must be the first.
-const byte shipSizes[numberOfShips] = {maxShipSize, 4, 3, 3};
+#define numberOfShips 4                                         // Defines the number of different ships existing
+#define maxShipSize 5                                           // Defines the maximum size of a ship
+const byte shipSizes[numberOfShips] = {maxShipSize, 4, 3, 3};   // Each ship fits in a square, from top left, defined below for fitting on map.
 
-// Ships are defined below.0 means "off", and 1 means "on"
+// Ships are defined below.0 means "off", and 1 means "on". Set them in progmem to save RAM.
+// Ships "real size", meaning taking the 0 columns and lines off, must be the size defined in the table "shipSizes".
 const byte PROGMEM ships[numberOfShips][maxShipSize][maxShipSize] = {
   {
     {0, 1, 1, 1, 0},
@@ -162,10 +164,14 @@ if(lastMillis - millis() > 500) {
   delay(1);
 }
 
+// Displaying a player's ship on the matrix, depending on its level and position
 void displayPlayer(Player playerToDisplay) {
+  
+  // Depending on the player's level, we iterate on the respective ship size
   for(byte i = 0; i < shipSizes[playerToDisplay.level]; i++) {
     for(byte j = 0; j < shipSizes[playerToDisplay.level]; j++) {
-      // We recopy in our LED Matrix the player's ship, depending on the player level.
+      
+      // Then, we recopy in our LED Matrix the player's ship, depending on the player position and level.
       LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
     }
   }
