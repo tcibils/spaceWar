@@ -1,8 +1,8 @@
-/* 
- *  
- *  Creator : Thomas Cibils
- *  Last update : 05.02.2019
- *  FastLED tuto : https://github.com/FastLED/FastLED/wiki/Basic-usage - used for WS2812B 5050 RGB LED Strip 5M 150 300 Leds 144 60LED/M Individual Addressable 5V
+/*
+
+    Creator : Thomas Cibils
+    Last update : 05.02.2019
+    FastLED tuto : https://github.com/FastLED/FastLED/wiki/Basic-usage - used for WS2812B 5050 RGB LED Strip 5M 150 300 Leds 144 60LED/M Individual Addressable 5V
  *  */
 
 #include <TimerOne.h>
@@ -31,7 +31,7 @@ CRGB leds[NUM_LEDS];                                          // Defining leds t
 #define BTN_L 1024
 #define BTN_R 2048
 #define NO_GAMEPAD 61440
- 
+
 /* Pin mapping */
 #define numberOfGamepads 2
 // First pin in LATCH, second is CLOCK, third is DATA
@@ -96,8 +96,8 @@ struct Player {
 
 // And the players are listed here
 Player playersArray[numberOfPlayers] = {
-  {1,1,1,Purple},
-  {13,13,2,Red}
+  {3, 3, 1, Purple},
+  {13, 13, 2, Red}
 };
 
 
@@ -136,7 +136,7 @@ const byte PROGMEM ships[numberOfShips][maxShipSize][maxShipSize] = {
   {
     {0, 1, 1, 0, 0},
     {0, 1, 0, 0, 0},
-    {0, 1, 1, 0, 0}, 
+    {0, 1, 1, 0, 0},
     {0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0}
   }
@@ -146,14 +146,14 @@ const byte PROGMEM ships[numberOfShips][maxShipSize][maxShipSize] = {
 void setup() {
 
   Serial.begin(9600);
-  
+
   // Set matrix pins to output
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
   clearLEDMatrix();
-  
+
   /* Initializing each SNES gamepad */
-  for(byte i = 0; i < numberOfGamepads; i++) {
+  for (byte i = 0; i < numberOfGamepads; i++) {
     pinMode(gamepadPins[i][0], OUTPUT);   // LATCH
     pinMode(gamepadPins[i][1], OUTPUT);   // CLOCK
     pinMode(gamepadPins[i][2], INPUT);    // DATA
@@ -162,51 +162,51 @@ void setup() {
 
 void loop() {
 
-if(lastMillis - millis() > 500) {
+  if (lastMillis - millis() > 500) {
 
 
-  lastMillis = millis();
-}
+    lastMillis = millis();
+  }
   clearLEDMatrix();
-   displayPlayer(playersArray[0]);
-   displayPlayer(playersArray[1]);
+  displayPlayer(playersArray[0]);
+  displayPlayer(playersArray[1]);
 
-   
 
-  for(byte playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+
+  for (byte playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
     checkButtons(playerIndex);
 
     // In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
-    if(playerButtonPushed[playerIndex][4] == 1) {
+    if (playerButtonPushed[playerIndex][4] == 1) {
       movePlayer(playerIndex, directionRight);
     }
-    
-    if(playerButtonPushed[playerIndex][5] == 1) {
+
+    if (playerButtonPushed[playerIndex][5] == 1) {
       movePlayer(playerIndex, directionLeft);
     }
-    
-    if(playerButtonPushed[playerIndex][6] == 1) {
+
+    if (playerButtonPushed[playerIndex][6] == 1) {
       movePlayer(playerIndex, directionDown);
     }
-    
-    if(playerButtonPushed[playerIndex][7] == 1) {
+
+    if (playerButtonPushed[playerIndex][7] == 1) {
       movePlayer(playerIndex, directionUp);
     }
 
     resetButtons(playerIndex);
   }
-  
+
   outputDisplay();
   delay(1);
 }
 
 // Displaying a player's ship on the matrix, depending on its level and position
 void displayPlayer(Player playerToDisplay) {
-  
+
   // Depending on the player's level, we iterate on the respective ship size
-  for(byte i = 0; i < shipSizes[playerToDisplay.level]; i++) {
-    for(byte j = 0; j < shipSizes[playerToDisplay.level]; j++) {
-      
+  for (byte i = 0; i < shipSizes[playerToDisplay.level]; i++) {
+    for (byte j = 0; j < shipSizes[playerToDisplay.level]; j++) {
+
       // Then, we recopy in our LED Matrix the player's ship, depending on the player position and level.
       LEDMatrix[playerToDisplay.lineCoordinate + i][playerToDisplay.columnCoordinate + j] = playerToDisplay.colour * pgm_read_byte(&(ships[playerToDisplay.level][i][j]));
     }
@@ -216,124 +216,155 @@ void displayPlayer(Player playerToDisplay) {
 
 // Moves the passed played in the passed direction, and make checks before doing it
 void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
-  
-  if(directionToMove == directionUp) {
-    if(playersArray[playerToMoveIndex].lineCoordinate > 0) {
+
+  bool blockedByAnotherPlayer = false;
+  bool blockedByMapBorder = false;
+
+  if (directionToMove == directionUp) {
+    // We need to check if another player is in the way. We check for all players
+    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+      // We do not check for the player we're moving, of course
+      if (playersIterationIndex != playerToMoveIndex) {
+        // If the player's "just above" is the bottom of another player
+        if (playersArray[playerToMoveIndex].lineCoordinate == playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+          // And if our most left point is at the left of the other player's most right point
+          if(playersArray[playerToMoveIndex].columnCoordinate < playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+            // And if our most right point is at the right of the other player's most left point
+            if(playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].columnCoordinate) {
+              // THEN YES WE'RE FUCKING BLOCKED
+              blockedByAnotherPlayer = true;
+            }
+          }
+        }
+      }
+    }
+    // We also check if we're near the map
+    if(playersArray[playerToMoveIndex].lineCoordinate == 0) {
+      blockedByMapBorder = true;
+    }
+
+    // If we're not blocked
+    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
+      // We move the player by one up
       playersArray[playerToMoveIndex].lineCoordinate--;
     }
   }
 
-  if(directionToMove == directionRight) {
-    if(playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
+  if (directionToMove == directionRight) {
+    if (playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
       playersArray[playerToMoveIndex].columnCoordinate++;
     }
   }
-  
-  if(directionToMove == directionDown) {
-    if(playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
+
+  if (directionToMove == directionDown) {
+    if (playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
       playersArray[playerToMoveIndex].lineCoordinate++;
     }
   }
-  
-  if(directionToMove == directionLeft) {
-    if(playersArray[playerToMoveIndex].columnCoordinate > 0) {
+
+  if (directionToMove == directionLeft) {
+    if (playersArray[playerToMoveIndex].columnCoordinate > 0) {
       playersArray[playerToMoveIndex].columnCoordinate--;
     }
   }
 }
 
-// Check buttons state for a given gamepad, and stores the result in the accoding player table 
+// Check buttons state for a given gamepad, and stores the result in the accoding player table
 void checkButtons(const byte gamepadID) {
-  
-    static uint16_t oldBtns = 0;      // Anciennes valeurs des boutons
-    uint16_t btns = getSnesButtons(gamepadID); // Valeurs actuelles des boutons
-      
-    /* Affiche l'état des boutons uniquement en cas de changement */
-    if(oldBtns != btns) {oldBtns = btns;}
-    else                {return;}
-  
-    if(btns & NO_GAMEPAD) {
-      Serial.println(F("No gamepad connected"));
-      return;
-    }
 
-    
-    // In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
-     
-    /* Affiche l'état de chaque bouton */
-    if(btns & BTN_A) {
-      playerButtonPushed[gamepadID][3] = 1;
-    }
-        
-    if(btns & BTN_B){
-      playerButtonPushed[gamepadID][11] = 1;
-    }
-  
-    
-    if(btns & BTN_X) {
-      playerButtonPushed[gamepadID][2] = 1;
-    }
-   
-    if(btns & BTN_Y) {
-      playerButtonPushed[gamepadID][10] = 1;
-    }
+  static uint16_t oldBtns = 0;      // Anciennes valeurs des boutons
+  uint16_t btns = getSnesButtons(gamepadID); // Valeurs actuelles des boutons
 
-    if(btns & BTN_SELECT) {
-      playerButtonPushed[gamepadID][9] = 1;
-    }
+  /* Affiche l'état des boutons uniquement en cas de changement */
+  if (oldBtns != btns) {
+    oldBtns = btns;
+  }
+  else                {
+    return;
+  }
 
-    if(btns & BTN_START) {
-      playerButtonPushed[gamepadID][8] = 1;
-    }
-   
-    if(btns & BTN_UP) {
-      playerButtonPushed[gamepadID][7] = 1;
-    }
-    
-    if(btns & BTN_DOWN) {
-      playerButtonPushed[gamepadID][6] = 1;
-    }
-    
-    if(btns & BTN_LEFT) {
-      playerButtonPushed[gamepadID][5] = 1;
-    }
-   
-    if(btns & BTN_RIGHT){
-      playerButtonPushed[gamepadID][4] = 1;
-    }
-     
-    if(btns & BTN_L) {
-      playerButtonPushed[gamepadID][1] = 1;
-    }
-   
-    if(btns & BTN_R) {
-      playerButtonPushed[gamepadID][0] = 1;
-    }
+  if (btns & NO_GAMEPAD) {
+    Serial.println(F("No gamepad connected"));
+    return;
+  }
+
+
+  // In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
+
+  /* Affiche l'état de chaque bouton */
+  if (btns & BTN_A) {
+    playerButtonPushed[gamepadID][3] = 1;
+  }
+
+  if (btns & BTN_B) {
+    playerButtonPushed[gamepadID][11] = 1;
+  }
+
+
+  if (btns & BTN_X) {
+    playerButtonPushed[gamepadID][2] = 1;
+  }
+
+  if (btns & BTN_Y) {
+    playerButtonPushed[gamepadID][10] = 1;
+  }
+
+  if (btns & BTN_SELECT) {
+    playerButtonPushed[gamepadID][9] = 1;
+  }
+
+  if (btns & BTN_START) {
+    playerButtonPushed[gamepadID][8] = 1;
+  }
+
+  if (btns & BTN_UP) {
+    playerButtonPushed[gamepadID][7] = 1;
+  }
+
+  if (btns & BTN_DOWN) {
+    playerButtonPushed[gamepadID][6] = 1;
+  }
+
+  if (btns & BTN_LEFT) {
+    playerButtonPushed[gamepadID][5] = 1;
+  }
+
+  if (btns & BTN_RIGHT) {
+    playerButtonPushed[gamepadID][4] = 1;
+  }
+
+  if (btns & BTN_L) {
+    playerButtonPushed[gamepadID][1] = 1;
+  }
+
+  if (btns & BTN_R) {
+    playerButtonPushed[gamepadID][0] = 1;
+  }
 }
 
 // Resets all buttons to 0 for a given gamepad.
 void resetButtons(const byte gamepadID) {
-  for(byte i = 0; i < 12; i++) {
-      playerButtonPushed[gamepadID][i] = 0; 
+  for (byte i = 0; i < 12; i++) {
+    playerButtonPushed[gamepadID][i] = 0;
   }
 }
 
 /** Retourne l'état de chaque bouton sous la forme d'un entier sur 16 bits. */
 uint16_t getSnesButtons(const byte gamepadID) {
-  
+
   /* 1 bouton = 1 bit */
   uint16_t value = 0;
- 
+
   /* Capture de l'état courant des boutons - we need LATCH here, so 0*/
   digitalWrite(gamepadPins[gamepadID][0], HIGH);
   digitalWrite(gamepadPins[gamepadID][0], LOW);
- 
+
   /* Récupère l'état de chaque bouton (12 bits + 4 bits à "1") */
-  for(byte i = 0; i < 16; ++i) {
- 
+  for (byte i = 0; i < 16; ++i) {
+
     /* Lit l'état du bouton et décale le bit reçu pour former l'entier sur 16 bits final - we need data here, so 2*/
     value |= digitalRead(gamepadPins[gamepadID][2]) << i;
- 
+
     /* Pulsation du signal d'horloge- we need CLOCK here, so 1 */
     digitalWrite(gamepadPins[gamepadID][1], HIGH);
     digitalWrite(gamepadPins[gamepadID][1], LOW);
@@ -357,34 +388,58 @@ void clearLEDMatrix() {
 
 // We update the physical display of the LED matrix, based on the LEDMatrix
 void outputDisplay() {
-  for(byte rowIndex = 0; rowIndex < displayNumberOfRows; rowIndex++) {
-    for(byte columnIndex = 0; columnIndex < displayNumberOfColumns; columnIndex++) {
+  for (byte rowIndex = 0; rowIndex < displayNumberOfRows; rowIndex++) {
+    for (byte columnIndex = 0; columnIndex < displayNumberOfColumns; columnIndex++) {
       // Useful because of the way my matrix is soldered.
       // So we'll invert one column every two compared to our digital matrix
       // If we're on an even column, we're fine, everything is straightfoward
-      if(columnIndex%2 == 1) {
-        
-        if(LEDMatrix[rowIndex][columnIndex] == Black) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Black;}
-        if(LEDMatrix[rowIndex][columnIndex] == White) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::White;}
-        if(LEDMatrix[rowIndex][columnIndex] == Green) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Green;}
-        if(LEDMatrix[rowIndex][columnIndex] == Blue) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Blue;}
-        if(LEDMatrix[rowIndex][columnIndex] == Red) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Red;}
-        if(LEDMatrix[rowIndex][columnIndex] == Purple) {leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Purple;}
+      if (columnIndex % 2 == 1) {
+
+        if (LEDMatrix[rowIndex][columnIndex] == Black) {
+          leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Black;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == White) {
+          leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::White;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Green) {
+          leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Green;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Blue) {
+          leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Blue;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Red) {
+          leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Red;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Purple) {
+          leds[(columnIndex + 1)*displayNumberOfRows - rowIndex - 1] = CRGB::Purple;
+        }
       }
       // If we're on an uneven column, we do a mathematical trick to invert it
-      else if(columnIndex%2 == 0) {
-        if(LEDMatrix[rowIndex][columnIndex] == Black) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Black;}
-        if(LEDMatrix[rowIndex][columnIndex] == White) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::White;}
-        if(LEDMatrix[rowIndex][columnIndex] == Green) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Green;}
-        if(LEDMatrix[rowIndex][columnIndex] == Blue) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Blue;}
-        if(LEDMatrix[rowIndex][columnIndex] == Red) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Red;}
-        if(LEDMatrix[rowIndex][columnIndex] == Purple) {leds[columnIndex*displayNumberOfRows + rowIndex] = CRGB::Purple;}
+      else if (columnIndex % 2 == 0) {
+        if (LEDMatrix[rowIndex][columnIndex] == Black) {
+          leds[columnIndex * displayNumberOfRows + rowIndex] = CRGB::Black;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == White) {
+          leds[columnIndex * displayNumberOfRows + rowIndex] = CRGB::White;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Green) {
+          leds[columnIndex * displayNumberOfRows + rowIndex] = CRGB::Green;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Blue) {
+          leds[columnIndex * displayNumberOfRows + rowIndex] = CRGB::Blue;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Red) {
+          leds[columnIndex * displayNumberOfRows + rowIndex] = CRGB::Red;
+        }
+        if (LEDMatrix[rowIndex][columnIndex] == Purple) {
+          leds[columnIndex * displayNumberOfRows + rowIndex] = CRGB::Purple;
+        }
       }
     }
   }
-  
+
   // Display the matrix physically
-  FastLED.show(); 
+  FastLED.show();
 }
 
 // We update the digital display of the LED matrix
