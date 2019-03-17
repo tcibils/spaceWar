@@ -254,34 +254,36 @@ void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
 
   // Case 2 : going right
   if (directionToMove == directionRight) {
-
+    blockedByAnotherPlayer = checkIfPlayerRightTo(playerToMoveIndex);
+    
     if (playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] == displayNumberOfColumns) {
       blockedByMapBorder = true;
     }
 
-    if(!blockedByMapBorder) {
+    if(!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].columnCoordinate++;
     }
   }
 
   if (directionToMove == directionDown) {
-    
+    blockedByAnotherPlayer = checkIfPlayerBelow(playerToMoveIndex);
     if (playersArray[playerToMoveIndex].lineCoordinate + shipSizes[playersArray[playerToMoveIndex].level] == displayNumberOfRows) {
       blockedByMapBorder = true;
     }
     
-    if(!blockedByMapBorder) {
+    if(!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].lineCoordinate++;
     }
   }
 
   if (directionToMove == directionLeft) {
-
+    blockedByAnotherPlayer = checkIfPlayerLeftTo(playerToMoveIndex);
+    
     if (playersArray[playerToMoveIndex].columnCoordinate == 0) {
       blockedByMapBorder = true;
     }
     
-    if(!blockedByMapBorder) {
+    if(!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].columnCoordinate--;
     }
   }
@@ -308,6 +310,27 @@ bool checkIfPlayerAbove(const byte playerToMoveIndex) {
     }
   }
 
+  return result;
+}
+
+
+bool checkIfPlayerBelow(const byte playerToMoveIndex) {
+  bool result = false;
+
+  return result;
+}
+
+
+bool checkIfPlayerLeftTo(const byte playerToMoveIndex) {
+  bool result = false;
+  
+  return result;
+}
+
+
+bool checkIfPlayerRightTo(const byte playerToMoveIndex) {
+  bool result = false;
+  
   return result;
 }
 
