@@ -237,23 +237,7 @@ void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
 
   // Case 1 : player is facing up
   if (directionToMove == directionUp) {
-    // We need to check if another player is in the way. We check for all players
-    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
-      // We do not check for the player we're moving, of course
-      if (playersIterationIndex != playerToMoveIndex) {
-        // If the player's "just above" is the bottom of another player
-        if (playersArray[playerToMoveIndex].lineCoordinate == playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
-          // And if our most left point is at the left of the other player's most right point
-          if(playersArray[playerToMoveIndex].columnCoordinate < playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
-            // And if our most right point is at the right of the other player's most left point
-            if(playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].columnCoordinate) {
-              // THEN YES WE'RE FUCKING BLOCKED
-              blockedByAnotherPlayer = true;
-            }
-          }
-        }
-      }
-    }
+    blockedByAnotherPlayer = checkIfPlayerAbove(playerToMoveIndex);
   
     // We also check if we're near the map
     if(playersArray[playerToMoveIndex].lineCoordinate == 0) {
@@ -271,26 +255,60 @@ void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
   // Case 2 : going right
   if (directionToMove == directionRight) {
 
-    if (playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
-     
+    if (playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] == displayNumberOfColumns) {
+      blockedByMapBorder = true;
+    }
+
+    if(!blockedByMapBorder) {
       playersArray[playerToMoveIndex].columnCoordinate++;
     }
   }
 
   if (directionToMove == directionDown) {
     
-    if (playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
+    if (playersArray[playerToMoveIndex].lineCoordinate + shipSizes[playersArray[playerToMoveIndex].level] == displayNumberOfRows) {
+      blockedByMapBorder = true;
+    }
     
+    if(!blockedByMapBorder) {
       playersArray[playerToMoveIndex].lineCoordinate++;
     }
   }
 
   if (directionToMove == directionLeft) {
 
-    if (playersArray[playerToMoveIndex].columnCoordinate > 0) {
+    if (playersArray[playerToMoveIndex].columnCoordinate == 0) {
+      blockedByMapBorder = true;
+    }
+    
+    if(!blockedByMapBorder) {
       playersArray[playerToMoveIndex].columnCoordinate--;
     }
   }
+}
+
+bool checkIfPlayerAbove(const byte playerToMoveIndex) {
+  bool result = false;
+  
+  // We need to check if another player is in the way. We check for all players
+  for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+    // We do not check for the player we're moving, of course
+    if (playersIterationIndex != playerToMoveIndex) {
+      // If the player's "just above" is the bottom of another player
+      if (playersArray[playerToMoveIndex].lineCoordinate == playersArray[playersIterationIndex].lineCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+        // And if our most left point is at the left of the other player's most right point
+        if(playersArray[playerToMoveIndex].columnCoordinate < playersArray[playersIterationIndex].columnCoordinate + shipSizes[playersArray[playersIterationIndex].level]) {
+          // And if our most right point is at the right of the other player's most left point
+          if(playersArray[playerToMoveIndex].columnCoordinate + shipSizes[playersArray[playerToMoveIndex].level] > playersArray[playersIterationIndex].columnCoordinate) {
+            // THEN YES WE'RE FUCKING BLOCKED
+            result = true;
+          }
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 // Check buttons state for a given gamepad, and stores the result in the accoding player table
