@@ -214,7 +214,7 @@ void displayPlayer(Player playerToDisplay) {
 }
 
 
-// Moves the passed played in the passed direction, and make checks before doing it
+// Moves the passed played in the passed direction, and make checks before doing it (existance of another spaceship or of world map so far)
 void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
 
   bool blockedByAnotherPlayer = false;
@@ -251,19 +251,58 @@ void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
   }
 
   if (directionToMove == directionRight) {
+
+    // We need to check if another player is in the way. We check for all players
+    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+      // We do not check for the player we're moving, of course
+      if (playersIterationIndex != playerToMoveIndex) {
+        
+      }
+    }
+    
     if (playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
+      blockedByMapBorder = true;
+    }
+    
+    // If we're not blocked
+    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].columnCoordinate++;
     }
   }
 
   if (directionToMove == directionDown) {
+    // We need to check if another player is in the way. We check for all players
+    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+      // We do not check for the player we're moving, of course
+      if (playersIterationIndex != playerToMoveIndex) {
+        
+      }
+    }
     if (playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
+      blockedByMapBorder = true;
+    }
+    
+    // If we're not blocked
+    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].lineCoordinate++;
     }
   }
 
   if (directionToMove == directionLeft) {
+    // We need to check if another player is in the way. We check for all players
+    for (byte playersIterationIndex = 0; playersIterationIndex < numberOfPlayers; playersIterationIndex++) {
+      // We do not check for the player we're moving, of course
+      if (playersIterationIndex != playerToMoveIndex) {
+        
+      }
+    }
+    
     if (playersArray[playerToMoveIndex].columnCoordinate > 0) {
+      blockedByMapBorder = true;
+    }
+    
+    // If we're not blocked
+    if (!blockedByMapBorder && !blockedByAnotherPlayer) {
       playersArray[playerToMoveIndex].columnCoordinate--;
     }
   }
