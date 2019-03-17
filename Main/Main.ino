@@ -33,23 +33,31 @@ CRGB leds[NUM_LEDS];                                          // Defining leds t
 #define NO_GAMEPAD 61440
  
 /* Pin mapping */
+#define numberOfGamepads 2
+// First pin in LATCH, second is CLOCK, third is DATA
+// On my Testing Gamepad, black is ground, green is +5V, White is latch, Yellow is clock, and Red is data
+const byte gamepadPins[numberOfGamepads][3] = {
+  {2, 3, 4},
+  {7, 8, 9}
+};
 static const byte PIN_LATCH = 2;
 static const byte PIN_CLOCK = 3;
 static const byte PIN_DATA = 4;
 
-byte leftButtonPushed = 0;
-byte rightButtonPushed = 0;
-byte upButtonPushed = 0;
-byte downButtonPushed = 0;
-byte aButtonPushed = 0;
-byte bButtonPushed = 0;
-byte xButtonPushed = 0;
-byte yButtonPushed = 0;
-byte rButtonPushed = 0;
-byte lButtonPushed = 0;
-byte startButtonPushed = 0;
-byte selectButtonPushed = 0;
+#define numberOfPlayers 2
+// In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
+// This order is not random, even if it seems to be : it corresponds to the order in which bytes are returned from the gamepad
+// See here : https://skyduino.wordpress.com/2014/02/23/tuto-arduino-et-gamepad-de-snes/
 
+byte playerButtonPushed[numberOfPlayers][12] = {
+  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+byte playerButtonPushedPrevious[numberOfPlayers][12] = {
+  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
 
 // LED Matrix
 // top column is from 0 to 7, bottom one from 56 to 63 (for a 8x8 matrix)
@@ -143,10 +151,12 @@ void setup() {
 
   clearLEDMatrix();
   
-  /* Initialisation des broches */
-  pinMode(PIN_LATCH, OUTPUT);
-  pinMode(PIN_CLOCK, OUTPUT);
-  pinMode(PIN_DATA, INPUT); 
+  /* Initializing each SNES gamepad */
+  for(byte i = 0; i < numberOfGamepads; i++) {
+    pinMode(gamepadPins[i][0], OUTPUT);   // LATCH
+    pinMode(gamepadPins[i][1], OUTPUT);   // CLOCK
+    pinMode(gamepadPins[i][2], INPUT);    // DATA
+  }
 }
 
 void loop() {
@@ -156,16 +166,35 @@ if(lastMillis - millis() > 500) {
 
   lastMillis = millis();
 }
-
+  clearLEDMatrix();
    displayPlayer(playersArray[0]);
    displayPlayer(playersArray[1]);
+
    
-   checkButtons();      // Checks which buttons have been pushed and set according variable to 1
 
-  // Do stuff using buttons variables here
+  for(byte playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+    checkButtons(playerIndex);
 
-   resetButtons();      // Re-sets button checks to 0 for the next loop
+    // In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
+    if(playerButtonPushed[playerIndex][4] == 1) {
+      movePlayer(playerIndex, directionRight);
+    }
+    
+    if(playerButtonPushed[playerIndex][5] == 1) {
+      movePlayer(playerIndex, directionLeft);
+    }
+    
+    if(playerButtonPushed[playerIndex][6] == 1) {
+      movePlayer(playerIndex, directionDown);
+    }
+    
+    if(playerButtonPushed[playerIndex][7] == 1) {
+      movePlayer(playerIndex, directionUp);
+    }
 
+    resetButtons(playerIndex);
+  }
+  
   outputDisplay();
   delay(1);
 }
@@ -185,37 +214,39 @@ void displayPlayer(Player playerToDisplay) {
 
 
 // Moves the passed played in the passed direction, and make checks before doing it
-void movePlayer(Player playerToMove, byte directionToMove) {
+void movePlayer(const byte playerToMoveIndex, const byte directionToMove) {
+  
   if(directionToMove == directionUp) {
-    if(playerToMove.lineCoordinate > 0) {
-      playerToMove.lineCoordinate--;
+    if(playersArray[playerToMoveIndex].lineCoordinate > 0) {
+      playersArray[playerToMoveIndex].lineCoordinate--;
     }
   }
 
   if(directionToMove == directionRight) {
-    if(playerToMove.columnCoordinate < displayNumberOfColumns - shipSizes[playerToMove.level]) {
-      playerToMove.columnCoordinate++;
+    if(playersArray[playerToMoveIndex].columnCoordinate < displayNumberOfColumns - shipSizes[playersArray[playerToMoveIndex].level]) {
+      playersArray[playerToMoveIndex].columnCoordinate++;
     }
   }
   
   if(directionToMove == directionDown) {
-    if(playerToMove.lineCoordinate < displayNumberOfRows - shipSizes[playerToMove.level]) {
-      playerToMove.lineCoordinate++;
+    if(playersArray[playerToMoveIndex].lineCoordinate < displayNumberOfRows - shipSizes[playersArray[playerToMoveIndex].level]) {
+      playersArray[playerToMoveIndex].lineCoordinate++;
     }
   }
   
   if(directionToMove == directionLeft) {
-    if(playerToMove.columnCoordinate > 0) {
-      playerToMove.columnCoordinate--;
+    if(playersArray[playerToMoveIndex].columnCoordinate > 0) {
+      playersArray[playerToMoveIndex].columnCoordinate--;
     }
   }
 }
 
-void checkButtons() {
+// Check buttons state for a given gamepad, and stores the result in the accoding player table 
+void checkButtons(const byte gamepadID) {
   
     static uint16_t oldBtns = 0;      // Anciennes valeurs des boutons
-    uint16_t btns = getSnesButtons(); // Valeurs actuelles des boutons
-    
+    uint16_t btns = getSnesButtons(gamepadID); // Valeurs actuelles des boutons
+      
     /* Affiche l'état des boutons uniquement en cas de changement */
     if(oldBtns != btns) {oldBtns = btns;}
     else                {return;}
@@ -224,94 +255,89 @@ void checkButtons() {
       Serial.println(F("No gamepad connected"));
       return;
     }
+
+    
+    // In order : {R, L, X, A, Right, Left, Down, High, Start, Select, Y, B}
      
     /* Affiche l'état de chaque bouton */
     if(btns & BTN_A) {
-      aButtonPushed = 1;
+      playerButtonPushed[gamepadID][3] = 1;
     }
         
     if(btns & BTN_B){
-      bButtonPushed = 1;
+      playerButtonPushed[gamepadID][11] = 1;
     }
   
     
     if(btns & BTN_X) {
-      xButtonPushed = 1;
+      playerButtonPushed[gamepadID][2] = 1;
     }
    
     if(btns & BTN_Y) {
-      yButtonPushed = 1;
+      playerButtonPushed[gamepadID][10] = 1;
     }
 
     if(btns & BTN_SELECT) {
-      selectButtonPushed = 1;
+      playerButtonPushed[gamepadID][9] = 1;
     }
-   
+
     if(btns & BTN_START) {
-      startButtonPushed = 1;
+      playerButtonPushed[gamepadID][8] = 1;
     }
    
     if(btns & BTN_UP) {
-      upButtonPushed = 1;
+      playerButtonPushed[gamepadID][7] = 1;
     }
     
     if(btns & BTN_DOWN) {
-      downButtonPushed = 1;
+      playerButtonPushed[gamepadID][6] = 1;
     }
     
     if(btns & BTN_LEFT) {
-      leftButtonPushed = 1;
+      playerButtonPushed[gamepadID][5] = 1;
     }
    
     if(btns & BTN_RIGHT){
-      rightButtonPushed = 1;
+      playerButtonPushed[gamepadID][4] = 1;
     }
      
     if(btns & BTN_L) {
-      lButtonPushed = 1;
+      playerButtonPushed[gamepadID][1] = 1;
     }
    
     if(btns & BTN_R) {
-      rButtonPushed = 1;
+      playerButtonPushed[gamepadID][0] = 1;
     }
 }
 
-void resetButtons() {
-  leftButtonPushed = 0;
-  rightButtonPushed = 0;
-  upButtonPushed = 0;
-  downButtonPushed = 0;
-  aButtonPushed = 0;
-  bButtonPushed = 0;
-  xButtonPushed = 0;
-  yButtonPushed = 0;
-  rButtonPushed = 0;
-  lButtonPushed = 0;
-  startButtonPushed = 0;
-  selectButtonPushed = 0;
+// Resets all buttons to 0 for a given gamepad.
+void resetButtons(const byte gamepadID) {
+  for(byte i = 0; i < 12; i++) {
+      playerButtonPushed[gamepadID][i] = 0; 
+  }
 }
 
 /** Retourne l'état de chaque bouton sous la forme d'un entier sur 16 bits. */
-uint16_t getSnesButtons() {
- 
+uint16_t getSnesButtons(const byte gamepadID) {
+  
   /* 1 bouton = 1 bit */
   uint16_t value = 0;
  
-  /* Capture de l'état courant des boutons */
-  digitalWrite(PIN_LATCH, HIGH);
-  digitalWrite(PIN_LATCH, LOW);
+  /* Capture de l'état courant des boutons - we need LATCH here, so 0*/
+  digitalWrite(gamepadPins[gamepadID][0], HIGH);
+  digitalWrite(gamepadPins[gamepadID][0], LOW);
  
   /* Récupère l'état de chaque bouton (12 bits + 4 bits à "1") */
   for(byte i = 0; i < 16; ++i) {
  
-    /* Lit l'état du bouton et décale le bit reçu pour former l'entier sur 16 bits final */
-    value |= digitalRead(PIN_DATA) << i;
+    /* Lit l'état du bouton et décale le bit reçu pour former l'entier sur 16 bits final - we need data here, so 2*/
+    value |= digitalRead(gamepadPins[gamepadID][2]) << i;
  
-    /* Pulsation du signal d'horloge */
-    digitalWrite(PIN_CLOCK, HIGH);
-    digitalWrite(PIN_CLOCK, LOW);
+    /* Pulsation du signal d'horloge- we need CLOCK here, so 1 */
+    digitalWrite(gamepadPins[gamepadID][1], HIGH);
+    digitalWrite(gamepadPins[gamepadID][1], LOW);
   }
- 
+
   /* Retourne le résultat sous une forme facile à manipuler (bouton appuyé = bit à "1") */
   return ~value;
 }
