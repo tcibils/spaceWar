@@ -77,6 +77,9 @@ const byte Purple = 5;
 #define directionDown 2
 #define directionLeft 3
 
+#define rotateLeft 0
+#define rotateRight 1
+
 struct pointOnMatrix {
   byte lineCoordinate;
   byte columnCoordinate;
@@ -192,12 +195,52 @@ void loop() {
     if (playerButtonPushed[playerIndex][7] == 1) {
       movePlayer(playerIndex, directionUp);
     }
+    
+    if (playerButtonPushed[playerIndex][2] == 1) {
+      rotatePlayer(playerIndex, rotateRight);
+    }
+    
+    if (playerButtonPushed[playerIndex][10] == 1) {
+      rotatePlayer(playerIndex, rotateLeft);
+    }
 
     resetButtons(playerIndex);
   }
 
   outputDisplay();
   delay(1);
+}
+
+void rotatePlayer(const byte playerToRotateID, const byte rotateDirection) {
+  if(rotateDirection == rotateLeft) {
+    if(playersArray[playerToRotateID].playerDirection == directionUp) {
+      playersArray[playerToRotateID].playerDirection = directionLeft;      
+    }
+    if(playersArray[playerToRotateID].playerDirection == directionLeft) {
+      playersArray[playerToRotateID].playerDirection = directionDown;       
+    }
+    if(playersArray[playerToRotateID].playerDirection == directionDown) {
+      playersArray[playerToRotateID].playerDirection = directionRight;      
+    }
+    if(playersArray[playerToRotateID].playerDirection == directionRight) {
+      playersArray[playerToRotateID].playerDirection = directionUp;
+    }
+  }
+
+  if(rotateDirection == rotateRight) {
+    if(playersArray[playerToRotateID].playerDirection == directionUp) {
+      playersArray[playerToRotateID].playerDirection = directionRight;      
+    }
+    if(playersArray[playerToRotateID].playerDirection == directionLeft) {
+      playersArray[playerToRotateID].playerDirection = directionUp;      
+    }
+    if(playersArray[playerToRotateID].playerDirection == directionDown) {
+      playersArray[playerToRotateID].playerDirection = directionLeft;     
+    }
+    if(playersArray[playerToRotateID].playerDirection == directionRight) {
+      playersArray[playerToRotateID].playerDirection = directionDown;
+    }    
+  }
 }
 
 // Displaying a player's ship on the matrix, depending on its level and position
